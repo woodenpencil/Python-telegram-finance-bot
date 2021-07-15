@@ -13,11 +13,13 @@ class Category(NamedTuple):
 
 class Categories:
     """Class that manages all categories"""
-    def __init__(self):
-        self._categories = self._load_categories()
+    categories: List[Category]
 
-    def _load_categories(self):
-        """Returns """
+    def __init__(self):
+        self.categories = self._load_categories()
+
+    def _load_categories(self) -> List[Category]:
+        """Retrieves categories from db, calls _fill_aliases"""
         categories = db.fetch_all("category",
                                   list(filter(lambda att: not att.startswith("_"), Category.__dict__.keys())))
         categories = self._fill_aliases(categories)
@@ -40,10 +42,10 @@ class Categories:
         return categories_result
 
     def get_category(self, category_name: str) -> Category:
-        """Returns category by it's aliase"""
+        """Returns category by it's alias"""
         found = None
         other_category = None
-        for category in self._categories:
+        for category in self.categories:
             if category.codename == "other":
                 other_category = category
             for alias in category.aliases:
@@ -53,3 +55,6 @@ class Categories:
             found = other_category
         return found
 
+    def get_all_categories(self) -> List[Category]:
+        """Returns list of categories"""
+        return self.categories

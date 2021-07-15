@@ -21,21 +21,24 @@ class Expense(NamedTuple):
     category_name: str
 
 
-def parse_message(raw_message: str)->Message:
+def parse_message(raw_message: str) -> Message:
     """Parses data about new expense"""
     re_result = re.match(r"([\d]+) (.*)", raw_message)
     if not re_result or not re_result.group(0) or not re_result.group(1) or not re_result.group(2):
-        raise Exception("Invalid format. Please write something like this: '0.8 subway'")
+        return None
+        #raise Exception("Invalid format. Please type /help and write correctly.")
     amount = re_result.group(1).replace(" ", "")
     category_text = re_result.group(2).strip().lower()
     return Message(amount=int(amount), category_text=category_text)
 
 
-def add_expense(raw_message: str)->Expense:
+def add_expense(raw_message: str) -> Expense:
     """Adds new expense"""
     parsed_message = parse_message(raw_message)
+    if not parsed_message:
+        return None
     category = Categories().get_category(parsed_message.category_text)
-    inserted_row_id = db.insert("expense",{
+    inserted_row_id = db.insert("expense", {
         "amount": parsed_message.amount,
         "created": _get_datetime(),
         "category_codename": category.codename,
@@ -51,3 +54,10 @@ def _get_datetime() -> str:
     tz = pytz.timezone("Europe/Moscow")
     now = datetime.datetime.now(tz)
     return now.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def delete_expense(row_id: int) -> None:
+    """Deletes expense by it's id"""
+    db.delete("expense", row_id)
+
+

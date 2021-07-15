@@ -5,9 +5,11 @@ from aiogram import Bot, Dispatcher, executor, types
 
 import expenses
 from categories import Categories
+C = Categories()
 from db import erase_all_tables
 
-API_TOKEN = os.getenv("TELEGRAM_API_TOKEN")
+#API_TOKEN = os.getenv("TELEGRAM_API_TOKEN")
+API_TOKEN = "1749682438:AAFXIT-WPRzbPJg6m9xIyaqp3m5S2Pd0nIA"
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
@@ -16,28 +18,45 @@ dp = Dispatcher(bot)
 async def send_welcome(message: types.Message):
     """Welcome message and help"""
     await message.answer(
-        "This is the financial bot")
+        "To add expense - 0.8 subway\n"
+        "To delete expense - /del 1\n"
+        "To see categories - /cat\n")
 
 
-@dp.message_handler(lambda message: message.text.startswith('del'))
+@dp.message_handler(commands=['cat'])
+async def categories_list(message: types.Message):
+    """Shows the list of available categories"""
+    categories = C.get_all_categories()
+    answer_message = "Categories:\n\n" +\
+        ('\n'.join([c.name+"("+", ".join(c.aliases)+")" for c in categories]))
+    await message.answer(answer_message)
+
+
+@dp.message_handler(lambda message: message.text.startswith('/del'))
 async def del_expense(message: types.Message):
     """Deletes expense"""
-    pass
+    row_id = int(message.text[4:])
+    expenses.delete_expense(row_id)
+    await message.answer(
+        f"The expense with id {row_id} has been deleted.")
 
 
 @dp.message_handler()
 async def add_expense(message: types.Message):
-    """Adds expense"""
+    """Adds expense or answers that message was incorrect"""
     expense = expenses.add_expense(message.text)
-    answer_message = (
-        f"The expense for the amount of {expense.amount} BYN for {expense.category_name} has been added.\n\n"
-
-    )
+    if not expense:
+        answer_message = (
+            "Invalid format. Please type /help and write correctly.\n\n"
+        )
+    else:
+        answer_message = (
+            f"The expense for the amount of {expense.amount} BYN for {expense.category_name} has been added.\n\n"
+        )
     await message.answer(answer_message)
 
 
 if __name__ == '__main__':
-    #erase_all_tables()     
     executor.start_polling(dp, skip_updates=True)
 
 

@@ -21,7 +21,7 @@ def insert(table: str, column_values: Dict):
 
 
 def _init_db():
-    """Inits database"""
+    """Initialises database"""
     with open("createdb.sql", "r") as f:
         sql = f.read()
     cursor.executescript(sql)
@@ -42,7 +42,6 @@ def fetch_all(table: str, columns: List[str]) -> List[Dict]:
     return result
 
 
-
 def check_db_exists():
     """Checks if db is initialized, if no - initializes"""
     cursor.execute("SELECT name FROM sqlite_master "
@@ -58,6 +57,14 @@ def erase_all_tables():
     cursor.execute("DROP TABLE budget;"
                    "DROP TABLE expenses"
                    "DROP TABLE category")
+
+
+def delete(table: str, row_id: int) -> None:
+    """Deletes row by it's id"""
+    cursor.execute(
+        f"DELETE FROM {table} WHERE id={row_id}"
+    )
+    conn.commit()
 
 
 check_db_exists()
