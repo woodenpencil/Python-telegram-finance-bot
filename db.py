@@ -67,4 +67,41 @@ def delete(table: str, row_id: int) -> None:
     conn.commit()
 
 
+def get_today_expenses() -> str:
+    """Returns sum of today expenses"""
+    cursor.execute("SELECT SUM(amount)"
+                   "FROM expense WHERE DATE(created)=DATE('now', 'localtime')")
+    res = cursor.fetchone()
+    if res[0]:
+        return res[0]
+    return "0"
+
+
+def get_today_base_expenses():
+    """Returns sum of today base expenses"""
+    cursor.execute("SELECT SUM(amount) FROM expense WHERE DATE(created)=DATE('now', 'localtime') AND category_codename in (SELECT codename FROM category WHERE is_base_expense=true)")
+    res = cursor.fetchone()
+    if res[0]:
+        return res[0]
+    return "0"
+
+
+def get_month_expenses(first_day_of_month: str):
+    """Returns sum of expenses of this month"""
+    cursor.execute(f"SELECT SUM(amount) FROM expense WHERE DATE(created) >= '{first_day_of_month}'")
+    res = cursor.fetchone()
+    if res[0]:
+        return res[0]
+    return "0"
+
+
+def get_month_base_expenses(first_day_of_month: str):
+    """Returns sum of base expenses of this month"""
+    cursor.execute(f"SELECT SUM(amount) FROM expense WHERE DATE(created) >= '{first_day_of_month}' AND category_codename in (SELECT codename FROM category WHERE is_base_expense=true)")
+    res = cursor.fetchone()
+    if res[0]:
+        return res[0]
+    return "0"
+
+
 check_db_exists()

@@ -38,9 +38,9 @@ def add_expense(raw_message: str) -> Expense:
     if not parsed_message:
         return None
     category = Categories().get_category(parsed_message.category_text)
-    inserted_row_id = db.insert("expense", {
+    db.insert("expense", {
         "amount": parsed_message.amount,
-        "created": _get_datetime(),
+        "created": _get_datetime_formatted(),
         "category_codename": category.codename,
         "raw_text": raw_message
     })
@@ -49,11 +49,16 @@ def add_expense(raw_message: str) -> Expense:
                    category_name=category.name)
 
 
-def _get_datetime() -> str:
+def _get_datetime_formatted() -> str:
     """Returns current datetime string formatted"""
+    return _get_datetime().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _get_datetime() -> datetime.datetime:
+    """Returns current datetime"""
     tz = pytz.timezone("Europe/Moscow")
     now = datetime.datetime.now(tz)
-    return now.strftime("%Y-%m-%d %H:%M:%S")
+    return now
 
 
 def delete_expense(row_id: int) -> None:
@@ -61,3 +66,27 @@ def delete_expense(row_id: int) -> None:
     db.delete("expense", row_id)
 
 
+def get_today_statistics() -> str:
+    """Returns statistics of expenses for today"""
+    all_today_expenses = db.get_today_expenses()
+    base_today_expenses = db.get_today_base_expenses()
+    return (f"Expenses for today:\n"
+            f"Total - {all_today_expenses} BYN\n\n"
+            f"Base - {base_today_expenses} BYN of {_get_budget_limit()} BYN\n\n")
+
+
+def get_month_statistics() -> str:
+    """Returns statistics of expenses for this month"""
+    now = _get_datetime()
+    first_day_of_month = f'{now.year:04d}-{now.month:02d}-01'
+    all_month_expenses = db.get_month_expenses(first_day_of_month)
+    base_month_expenses = db.get_month_base_expenses(first_day_of_month)
+    now = datetime.date.today().day
+    return (f"Expenses for this month:\n"
+            f"Total - {all_month_expenses}\n"
+            f"Base - {base_month_expenses} BYN of {now * _get_budget_limit()}")
+
+
+def _get_budget_limit() -> int:
+    """Returns day limit for base expenses"""
+    return db.fetch_all("budget", ["daily_limit"])[0]["daily_limit"]

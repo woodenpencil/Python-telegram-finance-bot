@@ -11,6 +11,9 @@ class Category(NamedTuple):
     aliases: List[str]
 
 
+Other_cat = Category("other", "other", True, [])
+
+
 class Categories:
     """Class that manages all categories"""
     categories: List[Category]
@@ -44,7 +47,7 @@ class Categories:
     def get_category(self, category_name: str) -> Category:
         """Returns category by it's alias"""
         found = None
-        other_category = None
+        other_category = Other_cat
         for category in self.categories:
             if category.codename == "other":
                 other_category = category
